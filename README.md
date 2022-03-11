@@ -1,13 +1,19 @@
-# TODO
+# Implementation Outline
 
-- make all Bytes in binary not decimal
-- Change All voids to bool
+Master File Table
+    - Construct Encoded table
+    - Write table
+    - Read Table
 
-- Remove use of bitset lib
-  -   create text to ascii/utf8 converter
-  -   create decimal to binary converter
+Linked Allocation
+    - Stacked Linked List
 
-- Don't inlcude .cpp files only .h files
-
-- setup git
-- used const l-value reference for all params and functions defs
+Edit File
+Create File (touch)
+Rename (mv)
+Delete (rm)
+Create File (touch)
+List (ls)
+Make Directory (mkdir)
+Change Directory (cd)
+Print Directory (pwd)
