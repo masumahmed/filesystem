@@ -9,13 +9,6 @@ void print(std::string s)
     std::cout << s << std::endl;
 }
 
-void StringtoUTF8(std::string s)
-{
-    for(auto &i: s)
-    {
-    }
-}
-
 std::string DecimaltoBinary(int num)
 {
     std::string buffer;

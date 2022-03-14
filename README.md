@@ -1,12 +1,12 @@
 # Implementation Outline
 
-Master File Table
+File Allocation Table
     - Construct Encoded table
     - Write table
     - Read Table
 
 Linked Allocation
-    - Stacked Linked List
+    - Stacked Linked List Class
 
 Edit File
 Create File (touch)

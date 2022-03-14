@@ -4,3 +4,5 @@ main:
 	
 clean:
 	rm -rf *.out
+	rm -rf *.txt
+	rm *.o
