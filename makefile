@@ -4,5 +4,5 @@ main:
 	
 clean:
 	rm -rf *.out
-	rm -rf *.txt
+	rm -rf volume.txt
 	rm *.o
