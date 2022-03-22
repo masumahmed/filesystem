@@ -16,21 +16,15 @@ public:
         std::cout << fname << std::endl;
         // remove file if it exists
         if (remove(fname) == 0)
-        {
             printf("The file is deleted successfully.\n");
-        }
         else
-        {
             printf("The file is not deleted.\n");
-        }
 
         // build file
         unsigned int size = bits + 8 * bytes + 8000 * kilobytes + 8000000 * megabytes;
         std::string text("");
         for (int i = 0; i < size; i++)
-        {
             text += '0';
-        }
         text += '\n';
 
         // create and build files
@@ -44,7 +38,7 @@ public:
         else
         {
             outfile.write(text.data(), text.size());
-            std::cerr << "Done Writing!" << std::endl;
+            std::cout << "Done Writing Volume!" << std::endl;
         }
     }
 

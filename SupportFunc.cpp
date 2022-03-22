@@ -19,3 +19,4 @@ std::string DecimaltoBinary(int num)
     }
     return buffer;
 }
+
