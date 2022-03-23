@@ -7,3 +7,10 @@ The contents of the text file will include UFT-8 encoded plain text characters r
 It's important to note that the storage device is 1 level abstracted from a real implementation of a file system since real file systems store their data encoded in binary.
 
 Since encoding from UFT-8 to binary is relatively trival plain text will be used for the human readability purposes.
+
+# Requirements
+GCC-11, C++20, make
+
+# Commands
+`$ make` compiles and runs the application
+`$ make clean` deletes generated files
