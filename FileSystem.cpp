@@ -5,15 +5,17 @@
 #include <fstream>
 #include <string>
 #include <bitset>
+
 #include "SupportFunc.cpp"
 
 class FileSystem
 {
 private:
+    int BlockSize = 256; // Default Block size is 256 Characters
 public:
-    void CreateVolume(const char *fname = "volume.txt", int bits = 0, int bytes = 0, int kilobytes = 0, int megabytes = 0)
+    void CreateVolumeLinkedAllocation(const char *fname = "volume.txt", int bits = 0, int bytes = 0, int kilobytes = 0, int megabytes = 0) const
     {
-        std::cout << fname << std::endl;
+        std::cout << fname << " is being created..." << std::endl;
         // remove file if it exists
         if (remove(fname) == 0)
             printf("The file is deleted successfully.\n");
@@ -23,8 +25,18 @@ public:
         // build file
         unsigned int size = bits + 8 * bytes + 8000 * kilobytes + 8000000 * megabytes;
         std::string text("");
+        int j = 1;
         for (int i = 0; i < size; i++)
+        {
+            if (i % (BlockSize - 10) == 0 && i != 0)  
+            {
+                text += DecToHex(j);
+                j++;
+                i+=9; // account for the length of j with the leading zeroes
+                continue;
+            }
             text += '0';
+        }
         text += '\n';
 
         // create and build files
@@ -42,12 +54,13 @@ public:
         }
     }
 
-    void FAT()
+    void FAT() const
     {
         print("Done");
         int TableSizeMB = 5; // table size 5 MB
 
-        std::string text = "filename, block, ";
+        std::string text = "filename, head, tail | '.FAT', 0x00000000, 0x00000032 | '.unaloc', 0x00000033, 0x00098968 | ";
+
         std::fstream file;
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);

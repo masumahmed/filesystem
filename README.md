@@ -8,9 +8,47 @@ It's important to note that the storage device is 1 level abstracted from a real
 
 Since encoding from UFT-8 to binary is relatively trival plain text will be used for the human readability purposes.
 
-# Requirements
-GCC-11, C++20, make
+# Specifications
+**Blcoksize**: 256 Characters
 
-# Commands
-`$ make` compiles and runs the application
+*Note: Since this project works with textfiles block sizes are not measured with traditional unit of computing (i.e. bits, bytes, kilobites, etc).*
+
+**Allocation**: Linked Allocation
+
+Linked List pointers live in the last 10 characters of a block starting with the characters '0x' (i.e. 0x00005000)
+
+**FAT**: 
+
+The FAT is stored in the begining of the volume.
+
+',' is the row delimiter
+'|' is the column delimiter
+
+# Requirements
+**GCC-11**
+
+*Note: This program does not compile properly on **Clang**...*
+
+# Testing
+to be written...
+
+# Compile Build and Run
+
+##### Make
+`$ make` compiles and builds the application
 `$ make clean` deletes generated files
+`$ make run` compiles, builds and runs the application
+<!-- `$ make test` compiles, builds and runs the application with test -->
+
+
+##### Run
+`$ ./main.out` runs the program
+
+<hr>
+
+**Author**: Masum Ahmed
+**Email**: MasumAhmed1798@gmail.com
+**Github**: https://github.com/masumahmed
+
+**Instructor**: Soumik Dey
+**Class**: CSCI 49500 Capstone Project
