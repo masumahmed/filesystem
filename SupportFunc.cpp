@@ -20,14 +20,14 @@ std::string DecimaltoBinary(int num)
     return buffer;
 }
 
-std::string DecToHex(int n)
+std::string DecToHex(int num)
 {
     char hex[100];
  
     int i = 0;
-    while (n != 0) {
+    while (num != 0) {
         int temp = 0;
-        temp = n % 16;
+        temp = num % 16;
          if (temp < 10) {
             hex[i] = temp + 48;
             i++;
@@ -37,7 +37,7 @@ std::string DecToHex(int n)
             i++;
         }
  
-        n = n / 16;
+        num = num / 16;
     }
  
     std::string result = "";
