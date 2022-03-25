@@ -13,16 +13,24 @@ Since encoding from UFT-8 to binary is relatively trival plain text will be used
 
 *Note: Since this project works with textfiles block sizes are not measured with traditional unit of computing (i.e. bits, bytes, kilobites, etc).*
 
-**Allocation**: Linked Allocation
+**Allocation** 
 
-Linked List pointers live in the last 10 characters of a block starting with the characters '0x' (i.e. 0x00005000)
+Linked Allocation: Linked List pointers live in the last 10 characters of a block starting with the characters '0x' (i.e. 0x00005000)
 
-**FAT**: 
+**FAT**
 
 The FAT is stored in the begining of the volume.
 
 ',' is the row delimiter
 '|' is the column delimiter
+
+**Scehma Header**
+
+| filename | head | tail |
+| - | - | - |
+| .FAT | 0x00000000 | 0x00000032 |
+| .unaloc | 0x00000033 | 0x00098968 |
+
 
 # Requirements
 **GCC-11**

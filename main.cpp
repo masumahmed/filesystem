@@ -6,7 +6,7 @@
 int main()
 {
     FileSystem fs;
-    fs.CreateVolumeLinkedAllocation("volume.txt", 0, 0, 0, 25); // Create a 25 MB virtual file
+    fs.CreateVolumeLinkedAllocation("volume.txt", 0, 0, 0, 10); // Create a 25 MB virtual file
     fs.FAT();
 }
 

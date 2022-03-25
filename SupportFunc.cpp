@@ -44,7 +44,7 @@ std::string DecToHex(int num)
     for (int j = i - 1; j >= 0; j--)
         result += hex[j];
 
-    std::string ResultWithLeadingZeros = "0x";
+    std::string ResultWithLeadingZeros = "";
     for(int i=0; i<(8 - result.length()); i++) 
         ResultWithLeadingZeros += "0";
     
