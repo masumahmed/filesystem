@@ -16,6 +16,57 @@ private:
     int DirectoryTableSize = 50; // in units of blocks
     const char *FlileName = "volume.txt";
 
+protected:
+    // @description: transfers specified table from storage to memeory
+    // @param int table takes arugement 0 for FAT and 1 for DirectoryTable
+    // @return a std::vector<std::vector<std::string>> with the specified table contents inside
+    std::vector<std::vector<std::string>> TabletoMemory(int table = -1) const
+    {
+        // error handling
+        if (table == -1)
+            throw std::invalid_argument("No argument supplied to TabletoMemory()");
+
+        std::vector<std::vector<std::string>> Table;
+        std::vector<std::string> buffer;
+
+        std::fstream file;
+        file.open("volume.txt", std::ios::in);
+        std::string line;
+        if (file.is_open())
+        {
+            getline(file, line);
+            if (table == 0)
+            {
+                line = line.substr(0, this->FATSize * this->BlockSize);
+            }
+            else if (table == 1)
+            {
+                line = line.substr((this->FATSize * this->BlockSize) + 1, this->DirectoryTableSize * this->BlockSize);
+            }
+        }
+
+        std::string temp = "";
+        for (auto &i : line)
+        {
+            if (i == ',')
+            {
+                buffer.push_back(temp);
+                temp = "";
+                continue;
+            }
+            else if (i == '|')
+            {
+                buffer.push_back(temp);
+                temp = "";
+                Table.push_back(buffer);
+                buffer.clear();
+                continue;
+            }
+            temp += i;
+        }
+        return Table;
+    }
+
 public:
     void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
     {
@@ -73,53 +124,11 @@ public:
         print("Done");
     }
 
-    // @description: transfers specified table from storage to memeory
-    // @param int table takes arugement 0 for FAT and 1 for DirectoryTable
+    // @description: wrapper method: transfers FAT from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> TabletoMemory(int table = -1) const
-    {
-        // error handling
-        if (table == -1)
-            throw std::invalid_argument("No argument supplied to TabletoMemory()");
+    std::vector<std::vector<std::string>> GetFAT() const { return TabletoMemory(0); }
 
-        std::vector<std::vector<std::string>> Table;
-        std::vector<std::string> buffer;
-
-        std::fstream file;
-        file.open("volume.txt", std::ios::in);
-        std::string line;
-        if (file.is_open())
-        {
-            getline(file, line);
-            if (table == 0)
-            {
-                line = line.substr(0, this->FATSize * this->BlockSize);
-            }
-            else if (table == 1)
-            {
-                line = line.substr((this->FATSize * this->BlockSize) + 1, this->DirectoryTableSize * this->BlockSize);
-            }
-        }
-
-        std::string temp = "";
-        for (auto &i : line)
-        {
-            if (i == ',')
-            {
-                buffer.push_back(temp);
-                temp = "";
-                continue;
-            }
-            else if (i == '|')
-            {
-                buffer.push_back(temp);
-                temp = "";
-                Table.push_back(buffer);
-                buffer.clear();
-                continue;
-            }
-            temp += i;
-        }
-        return Table;
-    }
+    // @description: wrapper method: transfers DirectoryTable from storage to memeory
+    // @return a std::vector<std::vector<std::string>> with the specified table contents inside
+    std::vector<std::vector<std::string>> GetDirectoryTable() const { return TabletoMemory(1); }
 };

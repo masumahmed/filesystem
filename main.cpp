@@ -14,7 +14,7 @@ int main()
 
     print("FAT");
     print("--------");
-    for (auto &i : fs.TabletoMemory(0))
+    for (auto &i : fs.GetFAT())
     {
         for (auto &j : i)
         {
@@ -26,7 +26,7 @@ int main()
     std::cout << std::endl;
     print("Directory Table");
     print("--------");
-    for (auto &i : fs.TabletoMemory(1))
+    for (auto &i : fs.GetDirectoryTable())
     {
         for (auto &j : i)
         {
