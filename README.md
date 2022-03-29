@@ -25,6 +25,8 @@ Linked Allocation: Linked List pointers live in the last 10 characters of a bloc
 
 The FAT is stored in the begining of the volume. The size of the FAT is denoted by the private member variables `FATSize`.
 
+When it encounters speical character 'e' then that is the end of linked allocation.
+
 
 | Busy | Next |
 | - | - |
