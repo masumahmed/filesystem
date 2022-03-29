@@ -17,19 +17,25 @@ Since encoding from UFT-8 to binary is relatively trival plain text will be used
 
 Linked Allocation: Linked List pointers live in the last 10 characters of a block starting with the characters '0x' (i.e. 0x00005000)
 
-**FAT**
-
-The FAT is stored in the begining of the volume.
-
+**Tables**
 ',' is the row delimiter
 '|' is the column delimiter
 
-**Scehma Header**
+**FAT**
 
-| filename | head | tail |
+The FAT is stored in the begining of the volume. The size of the FAT is denoted by the private member variables `FATSize`.
+
+
+| Busy | Next |
+| - | - |
+| 0 | 0 |
+| 0 | 1 |
+
+**Directory Table**
+| filename | head |
 | - | - | - |
-| .FAT | 0x00000000 | 0x00000032 |
-| .unaloc | 0x00000033 | 0x00098968 |
+| .FAT | 0x00000001 |
+| .unaloc | 0x00000034 |
 
 
 # Requirements

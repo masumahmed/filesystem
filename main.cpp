@@ -6,12 +6,27 @@
 int main()
 {
     FileSystem fs;
-    // fs.CreateVolumeLinkedAllocation("volume.txt", 0, 0, 0, 10); // Create a 25 MB virtual file
-    // fs.FAT();
+    // fs.BuildVolume("volume.txt", 1000); // Create a 1000 Block virtual file
+    // fs.BuildFAT();
+    // fs.BuildDirectoryTable();
 
-    std::vector<std::vector<std::string>> FAT = fs.FATtoMemory();
+    // fs.TabletoMemory(0);
 
-    for (auto &i : FAT)
+    print("FAT");
+    print("--------");
+    for (auto &i : fs.TabletoMemory(0))
+    {
+        for (auto &j : i)
+        {
+            std::cout << j << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << std::endl;
+    print("Directory Table");
+    print("--------");
+    for (auto &i : fs.TabletoMemory(1))
     {
         for (auto &j : i)
         {

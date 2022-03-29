@@ -11,11 +11,13 @@
 class FileSystem
 {
 private:
-    int BlockSize = 256; // Default Block size is 256 Characters
-    int FATSize = 50;    // in units of blocks
+    int BlockSize = 256;         // Default Block size is 256 Characters
+    int FATSize = 50;            // in units of blocks
+    int DirectoryTableSize = 50; // in units of blocks
+    const char *FlileName = "volume.txt";
 
 public:
-    void CreateVolumeLinkedAllocation(const char *fname = "volume.txt", int bits = 0, int bytes = 0, int kilobytes = 0, int megabytes = 0) const
+    void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
     {
         std::cout << fname << " is being created..." << std::endl;
         // remove file if it exists
@@ -25,18 +27,11 @@ public:
             printf("The file is not deleted...\n");
 
         // build file
-        unsigned int size = bits + 8 * bytes + 8000 * kilobytes + 8000000 * megabytes;
+        unsigned int size = blocks * this->BlockSize;
+
         std::string text("");
-        int j = 1;
         for (int i = 0; i < size; i++)
         {
-            if (i % (BlockSize - 8) == 0 && i != 0)
-            {
-                text += DecToHex(j);
-                j++;
-                i += 7; // account for the length of j with the leading zeroes
-                continue;
-            }
             text += '0';
         }
         text += '\n';
@@ -56,9 +51,9 @@ public:
         }
     }
 
-    void FAT() const
+    void BuildFAT() const
     {
-        std::string text = "'.FAT',0x00000000,0x00000032|'.unaloc',0x00000033,0x00098968|";
+        std::string text = "'.FAT',0x00000001|'.unaloc',0x00000034|";
         std::fstream file;
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);
@@ -67,9 +62,27 @@ public:
         print("Done");
     }
 
-    std::vector<std::vector<std::string>> FATtoMemory() const
+    void BuildDirectoryTable() const
     {
-        std::vector<std::vector<std::string>> FAT;
+        std::string text = "0,0|0,0|";
+        std::fstream file;
+        file.open("volume.txt");
+        file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
+        file.write(text.c_str(), text.size());
+        file.close();
+        print("Done");
+    }
+
+    // @description: transfers specified table from storage to memeory
+    // @param int table takes arugement 0 for FAT and 1 for DirectoryTable
+    // @return a std::vector<std::vector<std::string>> with the specified table contents inside
+    std::vector<std::vector<std::string>> TabletoMemory(int table = -1) const
+    {
+        // error handling
+        if (table == -1)
+            throw std::invalid_argument("No argument supplied to TabletoMemory()");
+
+        std::vector<std::vector<std::string>> Table;
         std::vector<std::string> buffer;
 
         std::fstream file;
@@ -78,7 +91,14 @@ public:
         if (file.is_open())
         {
             getline(file, line);
-            line.substr(0, this->FATSize * this->BlockSize);
+            if (table == 0)
+            {
+                line = line.substr(0, this->FATSize * this->BlockSize);
+            }
+            else if (table == 1)
+            {
+                line = line.substr((this->FATSize * this->BlockSize) + 1, this->DirectoryTableSize * this->BlockSize);
+            }
         }
 
         std::string temp = "";
@@ -94,12 +114,12 @@ public:
             {
                 buffer.push_back(temp);
                 temp = "";
-                FAT.push_back(buffer);
+                Table.push_back(buffer);
                 buffer.clear();
                 continue;
             }
             temp += i;
         }
-        return FAT;
+        return Table;
     }
 };
