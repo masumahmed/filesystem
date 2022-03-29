@@ -5,6 +5,7 @@
 
 int main()
 {
+    // FileSystem fs("volume.txt", 1000);
     FileSystem fs;
     // fs.BuildVolume("volume.txt", 1000); // Create a 1000 Block virtual file
     // fs.BuildFAT();

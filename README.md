@@ -39,7 +39,6 @@ When it encounters speical character 'e' then that is the end of linked allocati
 | .FAT | 0x00000001 |
 | .unaloc | 0x00000034 |
 
-
 # Requirements
 **GCC-11**
 

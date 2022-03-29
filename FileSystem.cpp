@@ -14,7 +14,6 @@ private:
     int BlockSize = 256;         // Default Block size is 256 Characters
     int FATSize = 50;            // in units of blocks
     int DirectoryTableSize = 50; // in units of blocks
-    const char *FlileName = "volume.txt";
 
 protected:
     // @description: transfers specified table from storage to memeory
@@ -68,6 +67,13 @@ protected:
     }
 
 public:
+    FileSystem(const char *FileName = "volume.txt", int blocks = 1000)
+    {
+        BuildVolume(FileName, blocks);
+        BuildFAT();
+        BuildDirectoryTable();
+    }
+
     void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
     {
         std::cout << fname << " is being created..." << std::endl;
