@@ -11,7 +11,7 @@
 class FileSystem
 {
 private:
-    int BlockSize = 256;         // Default Block size is 256 Characters
+    int BlockSize = 256;         // default Block size is 256 Characters
     int FATSize = 50;            // in units of blocks
     int DirectoryTableSize = 50; // in units of blocks
 
