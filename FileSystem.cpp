@@ -155,7 +155,7 @@ public:
             if (s == "exit")
                 break;
             else
-                std::cout << "Not a command" << std::endl;
+                std::cout << "command not found: " << s <<  std::endl;
         }
     }
 
