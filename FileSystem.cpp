@@ -14,6 +14,8 @@ private:
     int BlockSize = 256;         // default Block size is 256 Characters
     int FATSize = 50;            // in units of blocks
     int DirectoryTableSize = 50; // in units of blocks
+    int VolumeSize = 1000;
+    // char *_FILENAME = "";
 
 protected:
     // @description: sub-routine transfers specified table from storage to memeory
@@ -69,9 +71,12 @@ protected:
 public:
     FileSystem(const char *FileName = "volume.txt", int blocks = 1000)
     {
+        // this->_FILENAME = FileName;
+        VolumeSize = blocks;
         BuildVolume(FileName, blocks);
         BuildFAT();
         BuildDirectoryTable();
+        FileSystemCommand();
     }
 
     void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
@@ -130,6 +135,32 @@ public:
         print("Done");
     }
 
+    // get directory path location
+    // if the file exists then just reuse the head location
+    // if the file doesn't exist then add it to the DirectoryTable
+    //     form a link in the FAT
+    //     using the FAT link write the file on the volume
+    void WriteVolume() const
+    {
+    }
+
+    void FileSystemCommand() const
+    {
+        std::string s = "";
+        while (true)
+        {
+            std::cout << "\033[1;31m╭─user@FileSystem\033[0m\n\033[1;31m╰─$ \033[0m";
+            std::cin >> s;
+
+            if (s == "exit")
+                break;
+            else
+                std::cout << "Not a command" << std::endl;
+        }
+    }
+
+    // @description overwrites DirectoryTable with param
+    // @param a vector of vector strings that will be used to overwrite the DirectoryTable
     void WriteDirectoryTable(const std::vector<std::vector<std::string>> &table) const
     {
         std::string text = "";
@@ -146,8 +177,8 @@ public:
         }
 
         int len = (GetDirectoryTableSize() * GetBlockSize()) - text.length();
-        for(int i=0; i<len; i++)
-            text+='0';
+        for (int i = 0; i < len; i++)
+            text += '0';
 
         std::fstream file;
         file.open("volume.txt");
@@ -156,6 +187,8 @@ public:
         file.close();
     }
 
+    // @description overwrites FAT with param
+    // @param a vector of vector strings that will be used to overwrite the FAT
     void WriteFAT(const std::vector<std::vector<std::string>> &table) const
     {
         std::string text = "";
@@ -165,7 +198,7 @@ public:
             for (int j = 0; j < table[i].size(); j++)
             {
                 text += table[i][j];
-                if (j != table[i].size()-1)
+                if (j != table[i].size() - 1)
                     text += ",";
             }
             text += "|";

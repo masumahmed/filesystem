@@ -11,42 +11,42 @@ int main()
     // fs.BuildFAT();
     // fs.BuildDirectoryTable();
 
-    fs.WriteFAT(fs.GetFAT());
+    // fs.WriteFAT(fs.GetFAT());
 
-    print("FAT");
-    print("--------");
-    for (auto &i : fs.GetFAT())
-    {
-        for (auto &j : i)
-        {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
-    }
+    // print("FAT");
+    // print("--------");
+    // for (auto &i : fs.GetFAT())
+    // {
+    //     for (auto &j : i)
+    //     {
+    //         std::cout << j << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    std::cout << std::endl;
-    print("Directory Table");
-    print("--------");
-    for (auto &i : fs.GetDirectoryTable())
-    {
-        for (auto &j : i)
-        {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << std::endl;
+    // print("Directory Table");
+    // print("--------");
+    // for (auto &i : fs.GetDirectoryTable())
+    // {
+    //     for (auto &j : i)
+    //     {
+    //         std::cout << j << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    fs.WriteDirectoryTable(fs.GetDirectoryTable());
+    // fs.WriteDirectoryTable(fs.GetDirectoryTable());
 
-    std::cout << std::endl;
-    print("Directory Table");
-    print("--------");
-    for (auto &i : fs.GetDirectoryTable())
-    {
-        for (auto &j : i)
-        {
-            std::cout << j << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << std::endl;
+    // print("Directory Table");
+    // print("--------");
+    // for (auto &i : fs.GetDirectoryTable())
+    // {
+    //     for (auto &j : i)
+    //     {
+    //         std::cout << j << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 }
