@@ -16,10 +16,10 @@ private:
     int DirectoryTableSize = 50; // in units of blocks
 
 protected:
-    // @description: transfers specified table from storage to memeory
+    // @description: sub-routine transfers specified table from storage to memeory
     // @param int table takes arugement 0 for FAT and 1 for DirectoryTable
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> TabletoMemory(int table = -1) const
+    auto TabletoMemory(int table = -1) const
     {
         // error handling
         if (table == -1)
@@ -110,7 +110,7 @@ public:
 
     void BuildFAT() const
     {
-        std::string text = "'.FAT',0x00000001|'.unaloc',0x00000034|";
+        std::string text = "0,0|0,0|";
         std::fstream file;
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);
@@ -121,7 +121,7 @@ public:
 
     void BuildDirectoryTable() const
     {
-        std::string text = "0,0|0,0|";
+        std::string text = "'.FAT',0x00000001|'.unaloc',0x00000034|";
         std::fstream file;
         file.open("volume.txt");
         file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
@@ -130,11 +130,65 @@ public:
         print("Done");
     }
 
+    void WriteDirectoryTable(const std::vector<std::vector<std::string>> &table) const
+    {
+        std::string text = "";
+
+        for (int i = 0; i < table.size(); i++)
+        {
+            for (int j = 0; j < table[i].size(); j++)
+            {
+                text += table[i][j];
+                if (j == 0)
+                    text += ",";
+            }
+            text += "|";
+        }
+
+        std::fstream file;
+        file.open("volume.txt");
+        file.seekp(GetFATSize()*GetBlockSize(), std::ios::beg);
+        file.write(text.c_str(), text.size());
+        file.close();
+    }
+
+    void WriteFAT(const std::vector<std::vector<std::string>> &table) const
+    {
+        std::string text = "";
+
+        for (int i = 0; i < table.size(); i++)
+        {
+            for (int j = 0; j < table[i].size(); j++)
+            {
+                text += table[i][j];
+                if (j == 0)
+                    text += ",";
+            }
+            text += "|";
+        }
+
+        std::fstream file;
+        file.open("volume.txt");
+        file.seekp(0, std::ios::beg);
+        file.write(text.c_str(), text.size());
+        file.close();
+    }
+
     // @description: wrapper method: transfers FAT from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> GetFAT() const { return TabletoMemory(0); }
+    auto GetFAT() const { return TabletoMemory(0); }
 
     // @description: wrapper method: transfers DirectoryTable from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> GetDirectoryTable() const { return TabletoMemory(1); }
+    auto GetDirectoryTable() const { return TabletoMemory(1); }
+
+    // getters
+    int GetBlockSize() const { return this->BlockSize; }
+    int GetFATSize() const { return this->FATSize; }
+    int GetDirectoryTableSize() const { return this->DirectoryTableSize; }
+
+    // setters
+    void SetBlockSize(int size) { this->BlockSize = size; }
+    void SetFATSize(int size) { this->FATSize = size; }
+    void SetDirectoryTableSize(int size) { this->DirectoryTableSize = size; }
 };
