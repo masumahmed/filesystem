@@ -110,7 +110,7 @@ public:
 
     void BuildFAT() const
     {
-        std::string text = "0,0|0,0|";
+        std::string text = "0,0|12,0|";
         std::fstream file;
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);
@@ -145,9 +145,13 @@ public:
             text += "|";
         }
 
+        int len = (GetDirectoryTableSize() * GetBlockSize()) - text.length();
+        for(int i=0; i<len; i++)
+            text+='0';
+
         std::fstream file;
         file.open("volume.txt");
-        file.seekp(GetFATSize()*GetBlockSize(), std::ios::beg);
+        file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
         file.write(text.c_str(), text.size());
         file.close();
     }
@@ -161,7 +165,7 @@ public:
             for (int j = 0; j < table[i].size(); j++)
             {
                 text += table[i][j];
-                if (j == 0)
+                if (j != table[i].size()-1)
                     text += ",";
             }
             text += "|";
