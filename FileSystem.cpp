@@ -6,15 +6,15 @@
 #include <string>
 #include <vector>
 
-#include "SupportFunc.cpp"
+#include "FileSystem.SupportFunc.cpp"
 
 class FileSystem
 {
 private:
-    int BlockSize = 256;         // default Block size is 256 Characters
-    int FATSize = 50;            // in units of blocks
-    int DirectoryTableSize = 50; // in units of blocks
-    int VolumeSize = 1000;
+    int BlockSize = 256;          // default Block size is 256 bits (characters)
+    int FATSize = 256;            // in units of blocks
+    int DirectoryTableSize = 256; // in units of blocks
+    int VolumeSize = 2048;
     // char *_FILENAME = "";
 
 protected:
@@ -76,7 +76,7 @@ public:
         BuildVolume(FileName, blocks);
         BuildFAT();
         BuildDirectoryTable();
-        FileSystemCommand();
+        // FileSystemCommand();
     }
 
     void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
@@ -115,7 +115,11 @@ public:
 
     void BuildFAT() const
     {
-        std::string text = "0,0|12,0|";
+        // index | busy | next
+        std::string text = "";
+        for (int i = 0; i < this->FATSize * this->BlockSize / 8; i++)
+            text += "00,0000|";
+
         std::fstream file;
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);
@@ -126,7 +130,11 @@ public:
 
     void BuildDirectoryTable() const
     {
-        std::string text = "'.FAT',0x00000001|'.unaloc',0x00000034|";
+        std::string text = "0000000000000000000000.FAT,0000|00000000000.DirectoryTable,0001|";
+
+        for (int i = 0; i < this->DirectoryTableSize * this->BlockSize / 32; i++)
+            text += "00000000000000000000000000,0000|";
+
         std::fstream file;
         file.open("volume.txt");
         file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
@@ -135,13 +143,24 @@ public:
         print("Done");
     }
 
-    // get directory path location
-    // if the file exists then just reuse the head location
-    // if the file doesn't exist then add it to the DirectoryTable
-    //     form a link in the FAT
-    //     using the FAT link write the file on the volume
-    void WriteVolume() const
+    void Write(std::string FileName, std::string input) const
     {
+        // load fat into memory
+        auto DT = GetDirectoryTable();
+
+        // check if the filename already exists
+        for (auto i: DT)
+        {
+            std::string str = i[0];
+            if(str.find(FileName) != std::string::npos)
+            {
+                std::cerr << "err: duplicate filename" << std::endl;
+                return;
+            }
+        }
+
+        //find a free spot in the FAT
+        auto FAT = GetFAT();
     }
 
     void FileSystemCommand() const
@@ -152,10 +171,12 @@ public:
             std::cout << "\033[1;31m╭─user@FileSystem\033[0m\n\033[1;31m╰─$ \033[0m";
             std::cin >> s;
 
-            if (s == "exit")
+            std::vector<std::string> input = extract_strings(s);
+
+            if (input[0] == "exit")
                 break;
             else
-                std::cout << "command not found: " << s <<  std::endl;
+                std::cout << "command not found: " << s << std::endl;
         }
     }
 
@@ -213,11 +234,11 @@ public:
 
     // @description: wrapper method: transfers FAT from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    auto GetFAT() const { return TabletoMemory(0); }
+    std::vector<std::vector<std::string>> GetFAT() const { return TabletoMemory(0); }
 
     // @description: wrapper method: transfers DirectoryTable from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    auto GetDirectoryTable() const { return TabletoMemory(1); }
+    std::vector<std::vector<std::string>> GetDirectoryTable() const { return TabletoMemory(1); }
 
     // getters
     int GetBlockSize() const { return this->BlockSize; }

@@ -1,12 +1,12 @@
 main:
-	g++ -std=c++20 main.cpp -o main.out
+	g++ -std=c++17 main.cpp -o main.out
 
 run:
-	g++ -std=c++20 main.cpp -o main.out
+	g++ -std=c++17 main.cpp -o main.out
 	./main.out
 
 test:
-	g++ -std=c++20 test.cpp -o test.out
+	g++ -std=c++17 test.cpp -o test.out
 	./test.out
 	
 clean:

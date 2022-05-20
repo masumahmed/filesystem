@@ -28,10 +28,10 @@ The FAT is stored in the begining of the volume. The size of the FAT is denoted 
 When it encounters speical character 'e' then that is the end of linked allocation.
 
 
-| Busy | Next |
-| - | - |
-| 0 | 0 |
-| 0 | 1 |
+| Index | Busy | Next |
+| - | - | - |
+| 0 | 1 | 0 |
+| 1 | 1 | -1 |
 
 **Directory Table**
 | filename | head |
@@ -40,7 +40,7 @@ When it encounters speical character 'e' then that is the end of linked allocati
 | .unaloc | 0x00000034 |
 
 # Requirements
-**GCC-11**
+**GCC-9.3/C++17**
 
 *Note: This program does not compile properly on **Clang**...*
 
