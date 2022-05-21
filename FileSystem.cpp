@@ -152,7 +152,7 @@ public:
         return FreeBlocks[Random];
     }
 
-    void Write(std::string FileName, std::string input) const
+    void WriteWrapper(std::string FileName, std::string input) const
     {
         // base case if filename exceeds length limit
         if (FileName.length() > 26)
@@ -241,6 +241,8 @@ public:
             if (DT[i][0].find(FileName) != std::string::npos)
                 block = HexToDec(DT[i][1]);
 
+        std::cout << DecToHex(block) << std::endl;
+        std::cout << GetBlock(block) << std::endl;
         return "";
     }
 
@@ -286,6 +288,19 @@ public:
         file.open("volume.txt");
         file.seekp(0, std::ios::beg);
         file.write(text.c_str(), text.size());
+        file.close();
+    }
+
+    void Write(std::string FileName) const
+    {
+        std::fstream file;
+        file.open(FileName);
+        std::string line;
+        if (file.is_open())
+        {
+            getline(file, line);
+        }
+        WriteWrapper(FileName, line);
         file.close();
     }
 
