@@ -5,6 +5,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cstdlib>
+#include <math.h> /* ceil */
 
 #include "FileSystem.SupportFunc.cpp"
 
@@ -12,9 +14,8 @@ class FileSystem
 {
 private:
     int BlockSize = 256;          // default Block size is 256 bits (characters)
-    int FATSize = 256;            // in units of blocks
     int DirectoryTableSize = 256; // in units of blocks
-    int VolumeSize = 2048;
+    int VolumeSize = 2048;        // in units of blocks
     // char *_FILENAME = "";
 
 protected:
@@ -38,11 +39,7 @@ protected:
             getline(file, line);
             if (table == 0)
             {
-                line = line.substr(0, this->FATSize * this->BlockSize);
-            }
-            else if (table == 1)
-            {
-                line = line.substr((this->FATSize * this->BlockSize) + 1, this->DirectoryTableSize * this->BlockSize);
+                line = line.substr(0, this->DirectoryTableSize * this->BlockSize);
             }
         }
 
@@ -69,17 +66,16 @@ protected:
     }
 
 public:
-    FileSystem(const char *FileName = "volume.txt", int blocks = 1000)
+    FileSystem(const char *FileName = "volume.txt")
     {
+        srand(time(0));
         // this->_FILENAME = FileName;
-        VolumeSize = blocks;
-        BuildVolume(FileName, blocks);
-        BuildFAT();
+        BuildVolume(FileName);
         BuildDirectoryTable();
         // FileSystemCommand();
     }
 
-    void BuildVolume(const char *fname = "volume.txt", int blocks = 1000) const
+    void BuildVolume(const char *fname = "volume.txt") const
     {
         std::cout << fname << " is being created..." << std::endl;
         // remove file if it exists
@@ -89,11 +85,14 @@ public:
             printf("The file is not deleted...\n");
 
         // build file
-        unsigned int size = blocks * this->BlockSize;
+        unsigned int size = this->VolumeSize * this->BlockSize;
 
         std::string text("");
         for (int i = 0; i < size; i++)
         {
+            // std::string s = "0123456789";
+            // char c = s[rand() % 10];
+            // text += c;
             text += '0';
         }
         text += '\n';
@@ -113,12 +112,12 @@ public:
         }
     }
 
-    void BuildFAT() const
+    void BuildDirectoryTable() const
     {
-        // index | busy | next
-        std::string text = "";
-        for (int i = 0; i < this->FATSize * this->BlockSize / 8; i++)
-            text += "00,0000|";
+        std::string text = "00000000000.DirectoryTable,0000|";
+
+        for (int i = 1; i < this->DirectoryTableSize * this->BlockSize / 32; i++)
+            text += "00000000000000000000000000,0000|";
 
         std::fstream file;
         file.open("volume.txt");
@@ -128,39 +127,121 @@ public:
         print("Done");
     }
 
-    void BuildDirectoryTable() const
+    int FindFreeBlock() const
     {
-        std::string text = "0000000000000000000000.FAT,0000|00000000000.DirectoryTable,0001|";
-
-        for (int i = 0; i < this->DirectoryTableSize * this->BlockSize / 32; i++)
-            text += "00000000000000000000000000,0000|";
-
         std::fstream file;
         file.open("volume.txt");
-        file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
-        file.write(text.c_str(), text.size());
+        std::string line;
+        if (file.is_open())
+        {
+            getline(file, line);
+            line = line.substr(this->DirectoryTableSize * this->BlockSize);
+        }
         file.close();
-        print("Done");
+
+        std::vector<int> FreeBlocks;
+        for (int i = 0; i < line.size(); i += this->BlockSize)
+        {
+            if (line[i] == '0')
+                FreeBlocks.push_back((i / this->BlockSize) + this->BlockSize);
+        }
+
+        int Range = FreeBlocks.size() - 1 + 1;
+        int Random = rand() % Range + 1;
+
+        return FreeBlocks[Random];
     }
 
     void Write(std::string FileName, std::string input) const
     {
-        // load fat into memory
+        // base case if filename exceeds length limit
+        if (FileName.length() > 26)
+        {
+            std::cerr << "Max FileName length is 26" << std::endl;
+            return;
+        }
+
+        // load DT into memory
         auto DT = GetDirectoryTable();
 
         // check if the filename already exists
-        for (auto i: DT)
+        for (auto i : DT)
         {
             std::string str = i[0];
-            if(str.find(FileName) != std::string::npos)
+            if (str.find(FileName) != std::string::npos)
             {
                 std::cerr << "err: duplicate filename" << std::endl;
                 return;
             }
         }
 
-        //find a free spot in the FAT
-        auto FAT = GetFAT();
+        // insert filename into the DT
+        int DTEntryIndex;
+        for (int i = 0; i < DT.size(); i++)
+        {
+            if (DT[i][0] == "00000000000000000000000000")
+            {
+                DTEntryIndex = i;
+                std::string fname;
+                for (int i = 0; i < (26 - FileName.length()); i++)
+                    fname += '0';
+
+                DT[i][0] = fname + FileName;
+                break;
+            }
+        }
+
+        // insert index block into DT
+        std::string hex = DecToHex(FindFreeBlock());
+        DT[DTEntryIndex][1] = hex;
+        WriteDirectoryTable(DT);
+
+        // insert all other indecies into the the Index Block in the writable volume
+        std::fstream file;
+        file.open("volume.txt");
+        std::string line;
+        if (file.is_open())
+        {
+            getline(file, line);
+            line = line.substr(this->DirectoryTableSize * this->BlockSize);
+        }
+        file.close();
+
+        int BlocksNeeded = ceil(float(input.length()) / float(this->BlockSize));
+        std::string IndexBuffer = "";
+        for (int i = 0; i < BlocksNeeded; i++)
+        {
+            std::string temp = DecToHex(FindFreeBlock());
+            IndexBuffer += temp;
+        }
+
+        for (int i = 0; i < IndexBuffer.length(); i++)
+        {
+            line[HexToDec(hex) * this->BlockSize + i] = IndexBuffer[i];
+        }
+
+        file.open("volume.txt");
+        file.seekp(this->BlockSize * this->DirectoryTableSize + 1, std::ios::beg);
+        file.write(line.c_str(), line.size());
+        file.close();
+
+        // insert the data stream into the blocks
+        for (int i = 0; i < IndexBuffer.length(); i += 4)
+        {
+            std::string s = IndexBuffer.substr(i, 4);
+            WriteToVolume(HexToDec(s), input.substr((i / 4) * this->BlockSize, this->BlockSize));
+        }
+    }
+
+    std::string Read(std::string FileName) const
+    {
+        auto DT = GetDirectoryTable();
+        int block = 0;
+        for (int i = 0; i < DT.size(); i++)
+            if (DT[i][0].find(FileName) != std::string::npos)
+                block = HexToDec(DT[i][1]);
+
+        return "";
     }
 
     void FileSystemCommand() const
@@ -203,50 +284,51 @@ public:
 
         std::fstream file;
         file.open("volume.txt");
-        file.seekp((this->FATSize * this->BlockSize) + 1, std::ios::beg);
-        file.write(text.c_str(), text.size());
-        file.close();
-    }
-
-    // @description overwrites FAT with param
-    // @param a vector of vector strings that will be used to overwrite the FAT
-    void WriteFAT(const std::vector<std::vector<std::string>> &table) const
-    {
-        std::string text = "";
-
-        for (int i = 0; i < table.size(); i++)
-        {
-            for (int j = 0; j < table[i].size(); j++)
-            {
-                text += table[i][j];
-                if (j != table[i].size() - 1)
-                    text += ",";
-            }
-            text += "|";
-        }
-
-        std::fstream file;
-        file.open("volume.txt");
         file.seekp(0, std::ios::beg);
         file.write(text.c_str(), text.size());
         file.close();
     }
 
-    // @description: wrapper method: transfers FAT from storage to memeory
-    // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> GetFAT() const { return TabletoMemory(0); }
+    // @description overwrites a block within the writable volume
+    // @param BlockIndex: the index block which will be overwritten
+    // @param Input: the input data stream in form string that will be used to overwrite
+    void WriteToVolume(int BlockIndex, std::string Input) const
+    {
+        std::fstream file;
+        file.open("volume.txt");
+        file.seekp(BlockIndex * this->BlockSize, std::ios::beg);
+        file.write(Input.c_str(), Input.size());
+        file.close();
+    }
+
+    // @description: retrive the datastream of block given an index
+    // @param BlockIndex: the block index wanted for reterival
+    // @return the string stream of the data
+    std::string GetBlock(int BlockIndex) const
+    {
+        std::fstream file;
+        file.open("volume.txt");
+        std::string line;
+        if (file.is_open())
+        {
+            getline(file, line);
+            int size = BlockIndex * this->BlockSize;
+            line = line.substr(size, this->BlockSize);
+        }
+        file.close();
+
+        return line;
+    }
 
     // @description: wrapper method: transfers DirectoryTable from storage to memeory
     // @return a std::vector<std::vector<std::string>> with the specified table contents inside
-    std::vector<std::vector<std::string>> GetDirectoryTable() const { return TabletoMemory(1); }
+    std::vector<std::vector<std::string>> GetDirectoryTable() const { return TabletoMemory(0); }
 
     // getters
     int GetBlockSize() const { return this->BlockSize; }
-    int GetFATSize() const { return this->FATSize; }
     int GetDirectoryTableSize() const { return this->DirectoryTableSize; }
 
     // setters
     void SetBlockSize(int size) { this->BlockSize = size; }
-    void SetFATSize(int size) { this->FATSize = size; }
     void SetDirectoryTableSize(int size) { this->DirectoryTableSize = size; }
 };

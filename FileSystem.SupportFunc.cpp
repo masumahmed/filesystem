@@ -90,7 +90,7 @@ std::string DecToHex(int num)
 
     std::string ResultWithLeadingZeros = "";
 
-    for (int i = 0; i < (8 - result.length()); i++)
+    for (int i = 0; i < (4 - result.length()); i++)
         ResultWithLeadingZeros += "0";
 
     ResultWithLeadingZeros += result;
