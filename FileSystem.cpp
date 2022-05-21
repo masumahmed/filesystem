@@ -233,6 +233,21 @@ public:
         }
     }
 
+    void Delete(std::string FileName) const
+    {
+        auto DT = GetDirectoryTable();
+
+        for(int i=0; i<DT.size(); i++)
+        {
+            if(DT[i][0].find(FileName) != std::string::npos)
+            {
+                DT[i][0] = "00000000000000000000000000";
+                DT[i][1] = "0000";
+            }
+        }
+        WriteDirectoryTable(DT);
+    }
+
     std::string Read(std::string FileName) const
     {
         auto DT = GetDirectoryTable();

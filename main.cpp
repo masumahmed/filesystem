@@ -13,6 +13,8 @@ int main()
     std::cout << fs.GetBlock(2048) << std::endl;
 
     fs.Write("hello.txt");
+    // fs.Delete("hello.txt");
+
 
     // FileSystem fs;
     // fs.BuildVolume("volume.txt", 1000); // Create a 1000 Block virtual file
