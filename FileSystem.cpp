@@ -221,7 +221,7 @@ public:
         }
 
         file.open("volume.txt");
-        file.seekp(this->BlockSize * this->DirectoryTableSize + 1, std::ios::beg);
+        file.seekp(this->BlockSize * this->DirectoryTableSize, std::ios::beg);
         file.write(line.c_str(), line.size());
         file.close();
 
@@ -237,9 +237,9 @@ public:
     {
         auto DT = GetDirectoryTable();
 
-        for(int i=0; i<DT.size(); i++)
+        for (int i = 0; i < DT.size(); i++)
         {
-            if(DT[i][0].find(FileName) != std::string::npos)
+            if (DT[i][0].find(FileName) != std::string::npos)
             {
                 DT[i][0] = "00000000000000000000000000";
                 DT[i][1] = "0000";
@@ -256,9 +256,17 @@ public:
             if (DT[i][0].find(FileName) != std::string::npos)
                 block = HexToDec(DT[i][1]);
 
-        std::cout << DecToHex(block) << std::endl;
-        std::cout << GetBlock(block) << std::endl;
-        return "";
+        std::string Blocks = GetBlock(block + this->BlockSize);
+        std::string line = "";
+        for (int i = 0; i < Blocks.length(); i += 4)
+        {
+            std::string s = Blocks.substr(i, 4);
+            if (s == "0000")
+                break;
+            line += GetBlock(HexToDec(s));
+        }
+
+        return line;
     }
 
     void FileSystemCommand() const
