@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstdlib>
 #include <math.h> /* ceil */
+#include <algorithm>
 
 #include "FileSystem.SupportFunc.cpp"
 
@@ -15,7 +16,7 @@ class FileSystem
 private:
     int BlockSize = 256;          // default Block size is 256 bits (characters)
     int DirectoryTableSize = 256; // in units of blocks
-    int VolumeSize = 2048;        // in units of blocks
+    int VolumeSize = 4096;        // in units of blocks
     // char *_FILENAME = "";
 
 protected:
@@ -146,7 +147,7 @@ public:
                 FreeBlocks.push_back((i / this->BlockSize) + this->BlockSize);
         }
 
-        int Range = FreeBlocks.size() - 1 + 1;
+        int Range = FreeBlocks.size() - 1 - this->BlockSize + 1;
         int Random = rand() % Range + 1;
 
         return FreeBlocks[Random];
@@ -194,7 +195,7 @@ public:
         // insert index block into DT
         std::string hex = DecToHex(FindFreeBlock());
         DT[DTEntryIndex][1] = hex;
-        WriteDirectoryTable(DT);
+        OverwriteDirectoryTable(DT);
 
         // insert all other indecies into the the Index Block in the writable volume
         std::fstream file;
@@ -215,9 +216,51 @@ public:
             IndexBuffer += temp;
         }
 
-        for (int i = 0; i < IndexBuffer.length(); i++)
+        // debug print
+        //  std::cout << IndexBuffer << std::endl;
+
+        if (IndexBuffer.length() < this->BlockSize)
         {
-            line[HexToDec(hex) * this->BlockSize + i] = IndexBuffer[i];
+            for (int i = 0; i < IndexBuffer.length(); i++)
+                line[HexToDec(hex) * this->BlockSize + i] = IndexBuffer[i];
+        }
+        else
+        {
+            std::vector<std::string> IndexBlocks;
+            std::string tmp = "";
+            for (int i = 0; i < IndexBuffer.length(); i += this->BlockSize - 4)
+            {
+                std::string temp = IndexBuffer.substr(i, this->BlockSize - 4);
+                tmp += (temp);
+                tmp += (DecToHex(FindFreeBlock()));
+                IndexBlocks.push_back(tmp);
+                tmp = "";
+            }
+            std::string LastSubString = IndexBlocks[IndexBlocks.size() - 1];
+            LastSubString = LastSubString.substr(0, LastSubString.length() - 4);
+            IndexBlocks[IndexBlocks.size() - 1] = LastSubString;
+
+            // write to DT
+
+            // write to volume
+            for (int i = 0; i < IndexBlocks.size(); i++)
+            {
+                std::string r = IndexBlocks[i].substr(0, this->BlockSize - 4);
+                std::string s = IndexBlocks[i].substr(IndexBlocks[i].length() - 4 - 1, 4);
+
+                print(r);
+                print(s);
+                // WriteToVolume(HexToDec(s), r+s);
+            }
+
+            // return;
+
+            // Debugging prints
+            // for (auto i : IndexBlocks)
+            //     for (auto j : i)
+            //         std::cout << j;
+
+            // std::cout << std::endl;
         }
 
         file.open("volume.txt");
@@ -233,6 +276,89 @@ public:
         }
     }
 
+    void WriteWrapperNew(std::string FileName, std::string input) const
+    {
+        // generate free blocks list and string
+        if (input.length() / this->BlockSize * 4 < this->BlockSize)
+        {
+
+            std::vector<int> FreeBlocks;
+            int FreeBlocksNeeded = ceil(float(input.length()) / float(this->BlockSize));
+
+            for (int i = 0; i < FreeBlocksNeeded + 1; i++)
+            {
+                int Free = FindFreeBlock();
+                if (std::count(FreeBlocks.begin(), FreeBlocks.end(), Free))
+                    i--;
+                else
+                    FreeBlocks.push_back(Free);
+            }
+            std::string FreeBlocksStr = "";
+            for (int i = 1; i < FreeBlocks.size(); i++)
+                FreeBlocksStr += DecToHex(FreeBlocks[i]);
+
+            // write index block to DT and Volume
+            std::string buffer = "";
+            for (int i = 0; i < 26 - FileName.length(); i++)
+                buffer += "0";
+            WriteToDirectoryTable(buffer + FileName, DecToHex(FreeBlocks[0]));
+            WriteToVolume(FreeBlocks[0], FreeBlocksStr);
+
+            // write to volume
+            for (int i = 0; i < input.length() / this->BlockSize; i++)
+            {
+                std::string substr = input.substr(i, this->BlockSize);
+                WriteToVolume(FreeBlocks[i + 1], substr);
+            }
+        }
+        else
+        {
+            std::vector<int> FreeBlocks;
+            int FreeBlocksNeeded = ceil(float(input.length()) / float(this->BlockSize));
+            int IndexBlockOverflowNeeded = ceil(float(input.length()) / float(this->BlockSize) / float(this->BlockSize)) - 1;
+
+            for (int i = 0; i < FreeBlocksNeeded + 1 + IndexBlockOverflowNeeded; i++)
+            {
+                int Free = FindFreeBlock();
+                if (std::count(FreeBlocks.begin(), FreeBlocks.end(), Free))
+                    i--;
+                else
+                    FreeBlocks.push_back(Free);
+            }
+            std::string FreeBlocksStr = "";
+            for (int i = 1; i < FreeBlocks.size(); i++)
+                FreeBlocksStr += DecToHex(FreeBlocks[i]);
+
+            // write index blocks to DT and Volume
+            std::string buffer = "";
+            for (int i = 0; i < 26 - FileName.length(); i++)
+                buffer += "0";
+            WriteToDirectoryTable(buffer + FileName, DecToHex(FreeBlocks[0]));
+
+            for (int i = 0; i < IndexBlockOverflowNeeded + 1; i++)
+            {
+                if (i == 0)
+                {
+                    std::string substr = FreeBlocksStr.substr(i * this->BlockSize, this->BlockSize);
+                    WriteToVolume(FreeBlocks[0], substr);
+                }
+                else
+                {
+                    std::string substr = FreeBlocksStr.substr(i * this->BlockSize, this->BlockSize);
+                    int index = HexToDec(substr.substr(this->BlockSize - 4, 4));
+                    WriteToVolume(FreeBlocks[index], substr);
+                }
+            }
+
+            // write to volume
+            for (int i = 0; i < input.length() / this->BlockSize; i++)
+            {
+                std::string substr = input.substr(i, this->BlockSize);
+                WriteToVolume(FreeBlocks[i + 1], substr);
+            }
+        }
+    }
+
     void Delete(std::string FileName) const
     {
         auto DT = GetDirectoryTable();
@@ -245,7 +371,7 @@ public:
                 DT[i][1] = "0000";
             }
         }
-        WriteDirectoryTable(DT);
+        OverwriteDirectoryTable(DT);
     }
 
     std::string Read(std::string FileName) const
@@ -256,14 +382,23 @@ public:
             if (DT[i][0].find(FileName) != std::string::npos)
                 block = HexToDec(DT[i][1]);
 
-        std::string Blocks = GetBlock(block + this->BlockSize);
+        // std::string Blocks = GetBlock(block + this->BlockSize); // keeping this here as a toggle
+        std::string Blocks = GetBlock(block);
         std::string line = "";
-        for (int i = 0; i < Blocks.length(); i += 4)
+
+        if (Blocks.substr(Blocks.length() - 4, 4) == "0000")
         {
-            std::string s = Blocks.substr(i, 4);
-            if (s == "0000")
-                break;
-            line += GetBlock(HexToDec(s));
+            for (int i = 0; i < Blocks.length(); i += 4)
+            {
+                std::string s = Blocks.substr(i, 4);
+                if (s == "0000")
+                    break;
+                line += GetBlock(HexToDec(s));
+            }
+        }
+        else
+        {
+            std::vector<std::string> indecies;
         }
 
         return line;
@@ -288,7 +423,7 @@ public:
 
     // @description overwrites DirectoryTable with param
     // @param a vector of vector strings that will be used to overwrite the DirectoryTable
-    void WriteDirectoryTable(const std::vector<std::vector<std::string>> &table) const
+    void OverwriteDirectoryTable(const std::vector<std::vector<std::string>> &table) const
     {
         std::string text = "";
 
@@ -323,13 +458,13 @@ public:
         {
             getline(file, line);
         }
-        WriteWrapper(FileName, line);
+        WriteWrapperNew(FileName, line);
         file.close();
     }
 
     // @description overwrites a block within the writable volume
     // @param BlockIndex: the index block which will be overwritten
-    // @param Input: the input data stream in form string that will be used to overwrite
+    // @param Input: the input data stream in form string that will be used to overwrite MAXSIZE = 256
     void WriteToVolume(int BlockIndex, std::string Input) const
     {
         std::fstream file;
@@ -337,6 +472,47 @@ public:
         file.seekp(BlockIndex * this->BlockSize, std::ios::beg);
         file.write(Input.c_str(), Input.size());
         file.close();
+    }
+
+    void WriteToDirectoryTable(std::string FileName, std::string Address) const
+    {
+        // base case if filename exceeds length limit
+        if (FileName.length() > 26)
+        {
+            std::cerr << "Max FileName length is 26" << std::endl;
+            return;
+        }
+
+        // store into memory
+        auto DT = GetDirectoryTable();
+
+        // check if the filename already exists
+        for (auto i : DT)
+        {
+            std::string str = i[0];
+            if (str.find(FileName) != std::string::npos)
+            {
+                std::cerr << "err: duplicate filename" << std::endl;
+                return;
+            }
+        }
+
+        // linearly find the next available table slot
+        for (int i = 0; i < DT.size(); i++)
+        {
+            if (DT[i][0] == "00000000000000000000000000" and DT[i][1] == "0000")
+            {
+                std::string buffer = "";
+                for (int j = 0; j < 26 - FileName.length(); j++)
+                    buffer += '0';
+
+                DT[i][0] = buffer + FileName;
+                DT[i][1] = Address;
+                break;
+            }
+        }
+
+        OverwriteDirectoryTable(DT);
     }
 
     // @description: retrive the datastream of block given an index
